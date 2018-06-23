@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'cqujwc',
-    version = '0.0.1',
+    version = '0.0.3',
     keywords='spider cqu jwc',
     description = ('重庆大学教务处登录模块'),
     long_description=open('README.rst').read(),
