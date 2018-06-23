@@ -1,10 +1,11 @@
 from setuptools import setup, find_packages
 
 setup(
-    name = 'cqu_jwc',
-    version = '0.0.2',
+    name = 'cqujwc',
+    version = '0.0.1',
     keywords='spider cqu jwc',
-    description = '重庆大学教务处登录模块',
+    description = ('重庆大学教务处登录模块'),
+    long_description=open('README.rst').read(),
     license = 'MIT License',
     url = 'https://github.com/maxoyed-MS/cqu_jwc',
     author = 'maxoyed',

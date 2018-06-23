@@ -8,19 +8,19 @@
 ## 安装
 
 ```commandline
-pip install cqu-jwc
+pip install cqujwc
 ```
 
 或者
 ```commandline
 
-sudo pip install cqu-jwc
+sudo pip install cqujwc
 ```
 
 ## 使用
 
 ```python
-from cqu_jwc import Student
+from cqujwc import Student
 student = Student('学号', '密码')
 ```
 
