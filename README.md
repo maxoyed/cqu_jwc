@@ -1,4 +1,4 @@
-# cqu_jwc
+# cqujwc
 重庆大学教务处登录模块
 1. 自动登录教务网
 2. 封装了带session的GET和POST请求，方便开发者使用
