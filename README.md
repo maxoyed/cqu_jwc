@@ -7,14 +7,8 @@
 
 ## 安装
 
-```commandline
+```bash
 pip install cqujwc
-```
-
-或者
-```commandline
-
-sudo pip install cqujwc
 ```
 
 ## 使用
@@ -62,15 +56,62 @@ url | POST请求去掉server字段的url | 同上
 data | POST请求参数 | 和requests.post()的data参数一致
 headers | 请求头 | 默认只有UA
 
-## 获取当前登录用户姓名
+## 获取当前登录用户信息
 
 ```python
 student.get_current_name()
 ```
+返回示例
+```json
+{
+  "student_id": "学号",
+  "name": "姓名"
+}
+```
+
+## 获取入学以来每个学期的成绩
+```python
+student.get_grade()
+```
+返回示例
+```json
+{
+  "total": {
+    "name": "姓名",
+    "student_id": "学号",
+    "credit": "获得总学分",
+    "GPA": "平均学分绩点",
+    "no_pass": "未通过课程门数"
+  },
+  "items": [
+    {
+      "name": "学期",
+      "courses": [
+        {
+          "name": "课程名称",
+          "credit": "学分",
+          "category": "类别",
+          "take_property": "修读性质",
+          "score": "成绩",
+          "notes": "备注"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## 统一认证
+
+```python
+from cqujwc import verify_auth
+verify_auth('统一认证号', '密码')
+```
+
+验证成功返回`True`，失败返回`False`
 
 ## 开发计划
-[ - ] session管理
 
-[ - ] 四台服务器同时登录
-
-[ - ] 自动获取并设置代理服务器 
+- [x] 获取成绩信息
+- [ ] 获取课表
+- [ ] 多服务器session管理

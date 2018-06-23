@@ -73,6 +73,7 @@ class Student(object):
     def get(self, url, params=None, headers=None):
         if headers == None:
             headers = self.__session.headers
+        headers.update({'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"})
         res = self.__session.get(self.url + url, params=params, headers=headers)
         while res.status_code != 200:
             self.wait_time()
@@ -82,6 +83,7 @@ class Student(object):
     def post(self, url, data=None, headers=None):
         if headers == None:
             headers = self.__session.headers
+        headers.update({'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"})
         res = self.__session.post(self.url + url, data=data, headers=headers)
         while res.status_code != 200:
             self.wait_time()
@@ -89,17 +91,78 @@ class Student(object):
         return res
 
     # 获取当前登录用户姓名
-    def get_current_name(self):
+    def get_basic_info(self):
         res = self.__session.get(self.url + '/PUB/foot.aspx', headers=self.headers, proxies=self.proxies)
         html = etree.HTML(res.content.decode("gb2312"))
-        name = html.xpath('//div[@id="TheFootMemo"]/text()')[0]
-        rule = re.compile(r'](.*)')
-        name = re.findall(rule, name)[0]
-        if name:
-            return name
-        else:
-            return "No Data"
+        basic_info_str = html.xpath('//div[@id="TheFootMemo"]/text()')[0]
+        rule = re.compile(r'.*\[(.*)\](.*)')
+        basic_info_list = re.findall(rule, basic_info_str)[0]
+        return {
+            'student_id': basic_info_list[0],
+            'name': basic_info_list[1]
+        }
 
+    # 获取学生成绩
+    def get_grade(self):
+        url = "/xscj/Stu_MyScore_rpt.aspx"
+        payload = "SJ=1&btn_search=%BC%EC%CB%F7&SelXNXQ=0&zfx_flag=0&zxf=0"
+        headers = {
+            'accept': "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            'accept-encoding': "gzip, deflate",
+            'accept-language': "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+            'content-type': "application/x-www-form-urlencoded",
+            'dnt': "1",
+            'referer': self.url + "/xscj/Stu_MyScore.aspx",
+            'upgrade-insecure-requests': "1"
+        }
+        res = self.post(url, data=payload, headers=headers)
+        html = etree.HTML(res.text)
+
+        student_info = html.xpath("//table[1]//text()")[0].split()  # 获取学号姓名
+        data_table = html.xpath("//table[@id='ID_Table']/tr")  # 获取成绩表格
+        data_total = html.xpath("//table[@id='tableReportMain']/tr[last()]/td//text()")  # 获取数据总计
+        basic_pat = re.compile(r'.*：(.*)')
+        ret_data = {
+            'total': {
+                'name': re.findall(basic_pat, student_info[0])[0],
+                'student_id': re.findall(basic_pat, student_info[1])[0],
+                'credit': data_total[3],
+                'GPA': data_total[6],
+                'no_pass': data_total[-1]
+            },
+            'items': []
+        }
+
+        # 将成绩表格转化为json
+        for tr in data_table:
+            temp = []
+            for td in tr:
+                temp.append(td.text.strip() if td.text else "")
+            if temp[0]:
+                if ret_data['items'] == [] or temp[0] not in ret_data['items'][-1]['name']:
+                    ret_data['items'].append({
+                        "name": temp[0],
+                        "courses": [
+                            {
+                                "name": temp[1],
+                                "credit": temp[2],
+                                "category": temp[3],
+                                "take_property": temp[5],
+                                "score": temp[6],
+                                "notes": temp[-1]
+                            }
+                        ]
+                    })
+            else:
+                ret_data['items'][-1]['courses'].append({
+                    "name": temp[1],
+                    "credit": temp[2],
+                    "category": temp[3],
+                    "take_property": temp[5],
+                    "score": temp[6],
+                    "notes": temp[-1]
+                })
+        return ret_data
 
 
     def __init__(self, username, password, server=0, proxies=None):
@@ -113,3 +176,30 @@ class Student(object):
             'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"
         }
         self.login()
+
+def verify_auth(username, password):
+    s = requests.session()
+    res = s.get("http://authserver.cqu.edu.cn/authserver/login?service=http://i.cqu.edu.cn/ehome/index.do")
+    html = etree.HTML(res.content)
+    lt = html.xpath("//input[@name='lt']/@value")[0]
+    dllt = html.xpath("//input[@name='dllt']/@value")[0]
+    execution = html.xpath("//input[@name='execution']/@value")[0]
+    _eventId = html.xpath("//input[@name='_eventId']/@value")[0]
+    rmShown = html.xpath("//input[@name='rmShown']/@value")[0]
+    payload = {
+        "username": username,
+        "password": password,
+        "lt": lt,
+        "dllt": dllt,
+        "execution": execution,
+        "_eventId": _eventId,
+        "rmShown": rmShown,
+    }
+    res = s.post("http://authserver.cqu.edu.cn/authserver/login?service=http://i.cqu.edu.cn/ehome/index.do", data=payload)
+    html = etree.HTML(res.content)
+    mc_left = html.xpath("//div[@class='mc-left']//text()")
+    kick_table = html.xpath("//table[@class='kick_table']//text()")
+    if mc_left or kick_table:
+        return True
+    else:
+        return False
