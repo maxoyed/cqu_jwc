@@ -8,13 +8,13 @@
 ## 安装
 
 ```commandline
-pip install cqu_jwc
+pip install cqu-jwc
 ```
 
 或者
 ```commandline
 
-sudo pip install cqu_jwc
+sudo pip install cqu-jwc
 ```
 
 ## 使用
